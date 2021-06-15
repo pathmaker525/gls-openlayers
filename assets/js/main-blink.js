@@ -186,15 +186,15 @@ function alertControl(start) {
     var alertList = cableItemList[i].split(",");
     for (let j = 0; j < alertList.length; j++) {
       if (j === 0) {
-        if (alertList[0].split("#")[2] < 0) {
+        if (alertList[0].split("/")[2] < 0) {
         } else {
           alertValList.push(alertList[0]);
         }
       } else {
-        var cableInfo = alertList[0].split("#");
+        var cableInfo = alertList[0].split("/");
         if (alertList[j] < 0) {
         } else {
-          alertValList.push(`${cableInfo[0]}#${cableInfo[1]}#${alertList[j]}`);
+          alertValList.push(`${cableInfo[0]}/${cableInfo[1]}/${alertList[j]}`);
         }
       }
     }
@@ -208,16 +208,15 @@ function alertControl(start) {
       return;
     }
 
-    var alert_split = alert_val.split("#");
+    var alert_split = alert_val.split("/");
     var sel_cable = alert_split[1];
     var alert_pos = alert_split[2] * 1;
     var cableLength;
 
     if (sel_cable.indexOf("Cable") > -1) {
-      // var sel_cable_index = sel_cable.replaceAll("Cable-", "");
       $("#cable_list option").each((index, element) => {
-        if ("Cable-" + $(element).val().split("#")[0] === sel_cable) {
-          cableLength = $(element).val().split("#")[1];
+        if ($(element).val().split("/")[0] === sel_cable) {
+          cableLength = $(element).val().split("/")[1];
         }
       });
     } else {
@@ -592,7 +591,7 @@ function drawZone(zone) {
         new ol.style.Style({
           image: new ol.style.RegularShape({
             fill: new ol.style.Fill({
-              color: "#6f50fd"
+              color: zone.properties.color
             }),
             stroke: new ol.style.Stroke({
               color: "#109eff",
@@ -603,10 +602,10 @@ function drawZone(zone) {
             angle: feature.get("angle") || 0,
           }),
           fill: new ol.style.Fill({
-            color: "#6f50fd"
+            color: zone.properties.color
           }),
           stroke: new ol.style.Stroke({
-            color: "#6f50fd",
+            color: zone.properties.color,
             width: 3
           }),
           text: new ol.style.Text({
@@ -706,9 +705,9 @@ function drawCable(currentCable) {
         image: new ol.style.Circle({
           stroke: new ol.style.Stroke({
             color: "#f26552",
-            width: 10
+            width: 5
           }),
-          radius: 8,
+          radius: 4,
         }),
       })
     );

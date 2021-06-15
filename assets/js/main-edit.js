@@ -37,6 +37,7 @@ var imageUrl;
 var alertList = {};
 
 var addedCable = [];
+var addedZone = [];
 
 // image file name
 var tempImageName = "";
@@ -577,6 +578,10 @@ function drawZone(zone) {
   initSelectedZone();
   var geojsonObject = {};
 
+  if (zone.properties.color == null) {
+    zone.properties.color = $("#zoneColor").val();
+  }
+
   if (zone.type.toLowerCase() === "feature") {
     geojsonObject = {
       type: "FeatureCollection",
@@ -599,7 +604,7 @@ function drawZone(zone) {
         new ol.style.Style({
           image: new ol.style.RegularShape({
             fill: new ol.style.Fill({
-              color: "#6f50fd06"
+              color: `${zone.properties.color}18`
             }),
             stroke: new ol.style.Stroke({
               color: "#109eff",
@@ -610,10 +615,10 @@ function drawZone(zone) {
             angle: feature.get("angle") || 0,
           }),
           fill: new ol.style.Fill({
-            color: "#6f50fd90"
+            color: `${zone.properties.color}18`
           }),
           stroke: new ol.style.Stroke({
-            color: "#6f50fd",
+            color: zone.properties.color,
             width: 3
           }),
           text: new ol.style.Text({
@@ -1549,10 +1554,14 @@ function updateGeoJson() {
     }
   });
   addedCable = []
+  addedZone = []
   tempZoneGeoJson.features.map(feature => {
     const featureProperties = feature.properties;
     if (featureProperties && featureProperties.id && featureProperties.id.indexOf("Cable") > -1) {
       addedCable.push(featureProperties.id)
+    }
+    if (featureProperties && featureProperties.id && featureProperties.id.indexOf("Zone") > -1) {
+      addedZone.push(featureProperties.id)
     }
   })
   zoneGeoJson = tempZoneGeoJson
@@ -1566,6 +1575,14 @@ $(document).on("click", "#btnSave", null, function (e) {
       usedCables += cableId
     } else {
       usedCables += cableId + ","
+    }
+  })
+  let usedZones = "";
+  addedZone.map((zoneId, index) => {
+    if (index === addedZone.length - 1) {
+      usedZones += zoneId
+    } else {
+      usedZones += zoneId + ","
     }
   })
 
@@ -1589,7 +1606,14 @@ $(document).on("click", "#btnSave", null, function (e) {
   }
 
   // * Ajax call to localhost. Address is changeable
-  $.post("http://10.10.10.11", { data: JSON.stringify({ ...zoneGeoJson, "File Name": $("#txtfnam").val(), "All Cable Id": `${usedCables}` }) })
+  $.post("http://10.10.10.11", {
+    data: JSON.stringify({
+      ...zoneGeoJson,
+      "File Name": $("#txtfnam").val(),
+      "All Cable Id": `${usedCables}`,
+      "All Zone Id": `${usedZones}`,
+    })
+  })
     .done(function (data) {
       alert("GeoJson file has successfully transferred");
     })

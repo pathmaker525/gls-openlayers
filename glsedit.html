@@ -28,7 +28,7 @@
     <input id="txtfnam" name="txtfnam" type="hidden" value="abc.json" />
     <input id="txtblink" name="txtblink" type="hidden" value="" />
     <textarea id="txtgeojson" name="txtgeojson" hidden>
-      {"type":"FeatureCollection","features":[{"type":"Drawing","properties":{},"geometry":{"type":"LineString","coordinates":[[135.81919240875666,645.9274528917196],[558.6690475583121,641.6848122046003]]}},{"type":"Drawing","properties":{},"geometry":{"type":"LineString","coordinates":[[148.5471144701145,600.6726188957805],[528.970562748477,596.4299782086613],[533.2132034355964,436.6238456605015]]}},{"type":"Feature","properties":{"id":"Zone-14","text":"z-3"},"geometry":{"type":"Polygon","coordinates":[[[59.45166004060951,208.93546211843318],[626.5512985522206,208.93546211843318],[626.5512985522206,777.4493141924174],[59.45166004060951,777.4493141924174],[59.45166004060951,208.93546211843318]]]}},{"type":"Feature","properties":{"id":"Cable-14","text":"GDeviceAT30C01-Cable 1-Section 2-Zone","calibration":[{"offset":0,"coordinates":[83.49329060095212,743.5081886954631]},{"offset":10,"coordinates":[134.40497884638356,744.9224022578362]},{"offset":20,"coordinates":[193.80194846605357,744.9224022578362]},{"offset":30,"coordinates":[400.2771285725254,548.346717087976]}]},"geometry":{"type":"LineString","coordinates":[[83.49329060095212,743.5081886954631],[594.0243866176395,749.1650429449555],[595.4386001800126,245.70501474013372],[220.67200615114237,237.21973336589508],[209.35829765215757,542.6898628384836],[400.2771285725254,548.346717087976]]}}],"image":"map.png","File Name":"abc.json","All Cable Id":"Cable-14"}
+      {"type":"FeatureCollection","features":[{"type":"Feature","properties":{"id":"Zone-Zone-1","text":"Kitchen","color":"#2071d9"},"geometry":{"type":"Polygon","coordinates":[[[265.5,387],[434.5,387],[434.5,564],[265.5,564],[265.5,387]]]}},{"type":"Feature","properties":{"id":"Zone-Zone-2","text":"Living Room","color":"#8fd920"},"geometry":{"type":"Polygon","coordinates":[[[413.5,373],[625.5,373],[625.5,617],[413.5,617],[413.5,373]]]}}],"image":"map-image.png"}
     </textarea>
     <!-- Sidebar Holder -->
     <nav id="sidebar" class="app-sidebar">
@@ -189,10 +189,10 @@
               <div class="app-controller-items">
                 <div class="app-controller-item-layout">
                   <select id="zone_list" class="form-control app-optional">
-                    <option value="0">Select Zone</option>
-                    <option value="1">Zone 1</option>
-                    <option value="2">Zone 2</option>
-                    <option value="3">Zone 3</option>
+                    <option value="Zone-0">Select Zone</option>
+                    <option value="Zone-1">Zone 1</option>
+                    <option value="Zone-2">Zone 2</option>
+                    <option value="Zone-3">Zone 3</option>
                   </select>
                 </div>
                 <button class="btn btn-primary" id="btn_add_zone">Assign Zone</button>

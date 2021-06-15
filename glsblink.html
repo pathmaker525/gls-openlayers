@@ -26,9 +26,9 @@
 <body>
   <div class="app-wrapper">
     <input id="txtfnam" name="txtfnam" type="hidden" value="abc.json" />
-    <input id="txtblink" name="txtblink" type="hidden" value="Zone-1#Cable-1#600,750|Zone-2#Cable-3#1000,789,150|Zone-1#Cable-2#250,570" />
+    <input id="txtblink" name="txtblink" type="hidden" value="Zone-2/Cable-15/70" />
     <textarea id="txtgeojson" name="txtgeojson" hidden>
-      {"type":"FeatureCollection","features":[{"type":"Drawing","properties":{},"geometry":{"type":"Polygon","coordinates":[[[838,-50],[1022,-50],[1022,174],[838,174],[838,-50]]]}},{"type":"Drawing","properties":{},"geometry":{"type":"Polygon","coordinates":[[[658,726],[731.7897644669694,623.0333209967908],[655.9333580064183,521.579528933939],[782,534],[831.9333580064182,417.5795289339388],[884.2102355330306,532.9666790032093],[1010,518],[936.2102355330306,620.966679003209],[1012.0666419935817,722.420471066061],[886,710],[836.0666419935817,826.4204710660613],[783.7897644669696,711.0333209967908],[658,726]]]}},{"type":"Drawing","properties":{},"geometry":{"type":"Circle","coordinates":[[-674,382],268.32815729997475]}},{"type":"Feature","properties":{"id":"1243","text":"1243 Feet"},"geometry":{"type":"LineString","coordinates":[[-658,-224],[1387.4595008181059,-234.60649697673603]]}},{"type":"Feature","properties":{"id":"Cable-1","text":"Cable 1","calibration":[{"offset":0,"coordinates":[-122,1018]},{"offset":670,"coordinates":[431.3247985519075,762.3628614839246]},{"offset":800,"coordinates":[358,826]}]},"geometry":{"type":"LineString","coordinates":[[-122,1018],[438,1010],[426,550],[210,550],[202,830],[358,826]]}},{"type":"Feature","properties":{"id":"Cable-2","text":"Cable 2","calibration":[{"offset":0,"coordinates":[-186,1022]},{"offset":360,"coordinates":[112.97472982938865,733.60497968853]},{"offset":520,"coordinates":[520.7190746169323,462.20787593687135]},{"offset":600,"coordinates":[766,458]}]},"geometry":{"type":"LineString","coordinates":[[-186,1022],[-186,898],[110,902],[118,470],[766,458]]}},{"type":"Feature","properties":{"id":"Cable-3","text":"Cable 3","calibration":[{"offset":0,"coordinates":[1206,1022]},{"offset":230,"coordinates":[871.7829518909472,1014.5485535135508]},{"offset":790,"coordinates":[852.9664157103357,886.1346889899537]},{"offset":1000,"coordinates":[1114,86]}]},"geometry":{"type":"LineString","coordinates":[[1206,1022],[494,1006],[490,558],[726,890],[1090,878],[1114,86]]}},{"type":"Feature","properties":{"id":"Zone-1","text":"Zone 1"},"geometry":{"type":"Polygon","coordinates":[[[-202,454],[58,454],[58,838],[-202,838],[-202,454]]]}},{"type":"Feature","properties":{"id":"Zone-3","text":"Zone 3"},"geometry":{"type":"Polygon","coordinates":[[[-318,850],[-314,-2],[-266,-34],[762,-46],[798,-14],[798,158],[-230,162],[-242,1034],[-570,834],[-318,850]]]}},{"type":"Feature","properties":{"id":"Zone-2","text":"Zone 2"},"geometry":{"type":"Polygon","coordinates":[[[-194,218],[1018,218],[1018,390],[-194,390],[-194,218]]]}}],"image":"map-image-1.png","File Name":"abc.json","All Cable Id":"Cable-1,Cable-2,Cable-3"}
+      {"type":"FeatureCollection","features":[{"type":"Feature","properties":{"id":"Zone-Zone-1","text":"Kitchen","color":"#2071d9"},"geometry":{"type":"Polygon","coordinates":[[[265.5,387],[434.5,387],[434.5,564],[265.5,564],[265.5,387]]]}},{"type":"Feature","properties":{"id":"Zone-Zone-2","text":"Living Room","color":"#8fd920"},"geometry":{"type":"Polygon","coordinates":[[[413.5,373],[625.5,373],[625.5,617],[413.5,617],[413.5,373]]]}}],"image":"map-image.png"}
     </textarea>
     <!-- Sidebar Holder -->
     <nav id="sidebar" class="app-sidebar" hidden>
@@ -189,9 +189,9 @@
               <div class="app-controller-items">
                 <div class="app-controller-item-layout">
                   <select id="zone_list" class="form-control">
-                    <option value="1">Zone 1</option>
-                    <option value="2">Zone 2</option>
-                    <option value="3">Zone 3</option>
+                    <option value="Zone-1">Zone 1</option>
+                    <option value="Zone-2">Zone 2</option>
+                    <option value="Zone-24">Zone 3</option>
                   </select>
                 </div>
                 <button class="btn btn-primary" id="btn_add_zone">Assign Zone</button>
@@ -199,9 +199,9 @@
               <div class="app-controller-items">
                 <div class="app-controller-item-layout">
                   <select id="cable_list" class="form-control">
-                    <option value="1#800">Cable 1</option>
-                    <option value="2#600">Cable 2</option>
-                    <option value="3#1000">Cable 3</option>
+                    <option value="Cable-15/800">Cable 1</option>
+                    <option value="Cable-43/600">Cable 2</option>
+                    <option value="Cable-42/1000">Cable 3</option>
                   </select>
                 </div>
                 <button class="btn btn-primary" id="btn_add_cable">Assign Cable</button>

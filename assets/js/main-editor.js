@@ -37,6 +37,7 @@ var zoneGeoJson = {
 var alertList = {};
 
 var addedCable = [];
+var addedZone = [];
 
 // image file name
 var tempImageName = "map-image.png";
@@ -276,10 +277,10 @@ $(document).on("click", "#btn_add_cable", null, function () {
   // Data to draw on the map
   var $cableElem = $("#cable_list");
 
-  var cableId = "Cable-" + $cableElem.val().split("#")[0];
-  var cableLength = $cableElem.val().split("#")[1] * 1;
+  var cableId = $cableElem.val().split("/")[0];
+  var cableLength = $cableElem.val().split("/")[1] * 1;
 
-  if (cableLength === 0) {
+  if (cableId === "Cable-0") {
     alert("Please select cable type!");
     return;
   }
@@ -571,6 +572,8 @@ function drawZone(zone) {
   initSelectedZone();
   var geojsonObject = {};
 
+  zone.properties.color = $("#zoneColor").val();
+
   if (zone.type.toLowerCase() === "feature") {
     geojsonObject = {
       type: "FeatureCollection",
@@ -593,7 +596,7 @@ function drawZone(zone) {
         new ol.style.Style({
           image: new ol.style.RegularShape({
             fill: new ol.style.Fill({
-              color: "#6f50fd06"
+              color: `${$("#zoneColor").val()}18`
             }),
             stroke: new ol.style.Stroke({
               color: "#109eff",
@@ -604,10 +607,10 @@ function drawZone(zone) {
             angle: feature.get("angle") || 0,
           }),
           fill: new ol.style.Fill({
-            color: "#6f50fd90"
+            color: `${$("#zoneColor").val()}18`
           }),
           stroke: new ol.style.Stroke({
-            color: "#6f50fd",
+            color: $("#zoneColor").val(),
             width: 3
           }),
           text: new ol.style.Text({
@@ -661,7 +664,7 @@ function drawCable(currentCable) {
         new ol.style.Style({
           stroke: new ol.style.Stroke({
             color: "#557ef8",
-            width: 6
+            width: 8
           }),
           geometry: $("#cspline").prop("#557ef8") ? csp : null,
           text: new ol.style.Text({
@@ -706,7 +709,7 @@ function drawCable(currentCable) {
       new ol.style.Style({
         image: new ol.style.Circle({
           stroke: new ol.style.Stroke({
-            color: "#f26552",
+            color: "#03a9f4",
             width: 10
           }),
           radius: 8,
@@ -763,7 +766,7 @@ function drawCable(currentCable) {
 function addModifyAction(features) {
   modify = new ol.interaction.Modify({
     features,
-    pixelTolerance: 1,
+    pixelTolerance: 6,
     deleteCondition: (evt) => {
       return false;
     },
@@ -794,10 +797,10 @@ function addModifyAction(features) {
               new ol.style.Style({
                 image: new ol.style.Circle({
                   stroke: new ol.style.Stroke({
-                    color: "#f26552",
-                    width: 10
+                    color: "#03a9f4",
+                    width: 20
                   }),
-                  radius: 8,
+                  radius: 15,
                 }),
               })
             );
@@ -1084,7 +1087,7 @@ function addTransformNonScaleAction() {
 }
 
 function onCalibrationSave() {
-  const offset = $("#calibrationInfo").val();
+  const offset = $("#calibrationInfo").val() * 1;
   let maxValue;
 
   if (!offset) {
@@ -1138,6 +1141,8 @@ function onCalibrationSave() {
     value: offset
   });
 
+  console.log(zoneGeoJson);
+
   overlay.setPosition(undefined);
 }
 
@@ -1189,7 +1194,7 @@ function addSelectAction() {
         new ol.style.Style({
           stroke: new ol.style.Stroke({
             color: "#f26552",
-            width: 3
+            width: 6
           }),
           text: new ol.style.Text({
             text: each.getProperties().text,
@@ -1264,7 +1269,7 @@ function changeActionAs(actionType, shape = "None") {
         source: source,
         type: getGeometryFunction(shape)[0],
         geometryFunction: getGeometryFunction(shape)[1],
-      });
+      })
       break;
     case "Transform":
       newAction = new ol.interaction.Transform({
@@ -1344,7 +1349,7 @@ function getGeometryFunction(geometryType) {
 //* ******************** Create Zone ******************** *//
 $(document).on("click", "#btn_add_zone", null, function () {
   var $zoneElem = $("#zone_list");
-  if ($zoneElem.val() * 1 === 0) {
+  if ($zoneElem.val() === "Zone-0") {
     alert("Please select zone type!");
     return;
   }
@@ -1435,12 +1440,13 @@ function updateGeoJson() {
     image: imageName,
   };
 
-  const generateFeatureJson = (level, id, text, type, coordinates) => {
+  const generateFeatureJson = (level, id, text, type, coordinates, color) => {
     return {
       type: level,
       properties: {
         id,
-        text
+        text,
+        color,
       },
       geometry: {
         type,
@@ -1485,6 +1491,7 @@ function updateGeoJson() {
           let featureLevel;
           let featureId;
           let featureText;
+          let featureColor;
           let featureType;
           let featureCoordinates;
 
@@ -1505,6 +1512,7 @@ function updateGeoJson() {
           if (featureProperties) {
             featureId = featureProperties.id;
             featureText = featureProperties.text;
+            featureColor = featureProperties.color;
 
             if (featureText == "calibration") return;
 
@@ -1536,7 +1544,8 @@ function updateGeoJson() {
                   featureId,
                   featureText,
                   featureType,
-                  featureCoordinates
+                  featureCoordinates,
+                  featureColor
                 )
             );
           }
@@ -1545,10 +1554,14 @@ function updateGeoJson() {
     }
   });
   addedCable = []
+  addedZone = []
   tempZoneGeoJson.features.map(feature => {
     const featureProperties = feature.properties;
     if (featureProperties && featureProperties.id && featureProperties.id.indexOf("Cable") > -1) {
       addedCable.push(featureProperties.id)
+    }
+    if (featureProperties && featureProperties.id && featureProperties.id.indexOf("Zone") > -1) {
+      addedZone.push(featureProperties.id)
     }
   })
   zoneGeoJson = tempZoneGeoJson
@@ -1562,6 +1575,15 @@ $(document).on("click", "#btnSave", null, function (e) {
       usedCables += cableId
     } else {
       usedCables += cableId + ","
+    }
+  })
+
+  let usedZones = "";
+  addedZone.map((zoneId, index) => {
+    if (index === addedZone.length - 1) {
+      usedZones += zoneId
+    } else {
+      usedZones += zoneId + ","
     }
   })
 
@@ -1583,8 +1605,16 @@ $(document).on("click", "#btnSave", null, function (e) {
     alert("No zone selected!");
     return
   }
+  console.log(JSON.stringify(zoneGeoJson));
 
-  $.post("http://10.10.10.11", { data: JSON.stringify({ ...zoneGeoJson, "File Name": $("#txtfnam").val(), "All Cable Id": `${usedCables}` }) })
+  $.post("http://10.10.10.11", {
+    data: JSON.stringify({
+      ...zoneGeoJson,
+      "File Name": $("#txtfnam").val(),
+      "All Cable Id": `${usedCables}`,
+      "All Zone Id": `${usedZones}`
+    })
+  })
     .done(function (data) {
       alert("GeoJson file has successfully transferred");
     })
@@ -1629,7 +1659,7 @@ function init(
     if (!geoJson) {
       source = new ol.source.Vector({
         wrapX: false,
-        title: "source"
+        title: "source",
       });
     }
 
@@ -1690,7 +1720,7 @@ function init(
             color: f.get("color") || "rgba(255, 255, 255, 0.2)",
           }),
           stroke: new ol.style.Stroke({
-            width: 2,
+            width: 5,
             lineDash: [isDashLine],
             color: f.get("color") || [255, 128, 0],
           }),

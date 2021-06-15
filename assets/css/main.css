@@ -104,6 +104,13 @@ a:focus {
   transition: all 0.3s;
 }
 
+input[type = "color"] {
+  margin-right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
 a[data-toggle="collapse"] {
   position: relative;
 }
