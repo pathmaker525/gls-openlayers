@@ -5,6 +5,8 @@ var alerts = {};
 
 var view;
 
+var extent;
+
 var isSelectCalibration = false;
 
 //* Global Variable for Storing Draw Shape Type
@@ -48,7 +50,6 @@ var imageAssetUrl = "assets/images/";
 
 var map, vector;
 
-var extent = [0, 0, 1024, 968];
 var source;
 
 var container = document.getElementById("popup");
@@ -592,11 +593,12 @@ function drawZone(zone) {
       wrapX: false,
     }),
     style: function (feature) {
+      console.log(feature.getProperties().color);
       return [
         new ol.style.Style({
           image: new ol.style.RegularShape({
             fill: new ol.style.Fill({
-              color: `${$("#zoneColor").val()}18`
+              color: `${feature.getProperties().color}18`
             }),
             stroke: new ol.style.Stroke({
               color: "#109eff",
@@ -607,10 +609,10 @@ function drawZone(zone) {
             angle: feature.get("angle") || 0,
           }),
           fill: new ol.style.Fill({
-            color: `${$("#zoneColor").val()}18`
+            color: `${feature.getProperties().color}18`
           }),
           stroke: new ol.style.Stroke({
-            color: $("#zoneColor").val(),
+            color: feature.getProperties().color,
             width: 3
           }),
           text: new ol.style.Text({
@@ -1184,12 +1186,27 @@ function showCalibrationTooltip(feature) {
 function addSelectAction() {
   actionOnMap = changeActionAs("Select");
   actionOnMap.on("select", function (event) {
+    console.log("select");
     event.selected.forEach((each) => {
       selectedFeature = each;
       if (each.getProperties().text === "calibration") {
         showCalibrationTooltip(each);
+
+        each.setStyle(
+          new ol.style.Style({
+            image: new ol.style.Circle({
+              stroke: new ol.style.Stroke({
+                color: "#f26552",
+                width: 20
+              }),
+              radius: 15,
+            }),
+          })
+        );
+
         return;
       }
+
       each.setStyle(
         new ol.style.Style({
           stroke: new ol.style.Stroke({
@@ -1212,7 +1229,7 @@ function addSelectAction() {
           }),
           image: new ol.style.Circle({
             stroke: new ol.style.Stroke({
-              color: "#f26552",
+              color: "#f2655200",
               width: 6
             }),
             radius: 3,
@@ -1221,25 +1238,48 @@ function addSelectAction() {
       );
     });
 
-    return;
-  });
-  actionOnMap.on("deselect", function (event) {
     event.deselected.forEach((each) => {
-      if (selectedFeature.getGeometry().text === "calibration") {
+      console.log("deselect");
+      if (each.getProperties().id && each.getProperties().id.indexOf("Zone-") > -1) {
         each.setStyle(
           new ol.style.Style({
-            image: new ol.style.Circle({
-              stroke: new ol.style.Stroke({
-                color: "#f26552",
-                width: 6
+            image: new ol.style.RegularShape({
+              fill: new ol.style.Fill({
+                color: `${each.getProperties().color}18`
               }),
-              radius: 3,
+              stroke: new ol.style.Stroke({
+                color: "#109eff",
+                width: 2
+              }),
+              radius: 10,
+              points: 3,
+              angle: each.get("angle") || 0,
             }),
-          })
-        ); // more likely you want to restore the original style
+            fill: new ol.style.Fill({
+              color: `${each.getProperties().color}18`
+            }),
+            stroke: new ol.style.Stroke({
+              color: each.getProperties().color,
+              width: 3
+            }),
+            text: new ol.style.Text({
+              text: each.get("text"),
+              scale: 1.3,
+              offsetY: 15,
+              fill: new ol.style.Fill({
+                color: "green",
+              }),
+              stroke: new ol.style.Stroke({
+                color: "#FFFF99",
+                width: 3,
+              }),
+            }),
+          }),
+        );
       }
-      each.setStyle(null); // more likely you want to restore the original style
-    });
+    })
+
+    return;
   });
 
   setActionOnMap(actionOnMap);
@@ -1346,6 +1386,73 @@ function getGeometryFunction(geometryType) {
   return [type, geometryFunction];
 }
 
+$(document).on("click", "#btnChangeColor", null, function () {
+  const newColor = $("#zoneColor").val();
+
+  let targetZone;
+  map.getLayers().forEach((layer) => {
+    let source = layer.getSource();
+    if (source instanceof ol.source.Vector) {
+      let features = source.getFeatures();
+      if (features.length) {
+        features.forEach((feature) => {
+          const featureProperties = feature.getProperties();
+
+          const featureId = featureProperties.id;
+
+          console.log(featureId, selectedFeature.getProperties().id);
+          if (selectedFeature.getProperties().id && featureId === selectedFeature.getProperties().id) {
+            console.log(featureId, featureProperties.color, newColor)
+            featureProperties.color = newColor;
+            feature.setProperties(featureProperties);
+            targetZone = feature
+          }
+        })
+      }
+    }
+  })
+
+  console.log(targetZone.getProperties().color)
+  targetZone &&
+    targetZone.setStyle(
+      new ol.style.Style({
+        image: new ol.style.RegularShape({
+          fill: new ol.style.Fill({
+            color: `${targetZone.getProperties().color}18`
+          }),
+          stroke: new ol.style.Stroke({
+            color: "#109eff",
+            width: 2
+          }),
+          radius: 10,
+          points: 3,
+          angle: targetZone.get("angle") || 0,
+        }),
+        fill: new ol.style.Fill({
+          color: `${targetZone.getProperties().color}18`
+        }),
+        stroke: new ol.style.Stroke({
+          color: targetZone.getProperties().color,
+          width: 3
+        }),
+        text: new ol.style.Text({
+          text: targetZone.get("text"),
+          scale: 1.3,
+          offsetY: 15,
+          fill: new ol.style.Fill({
+            color: "green",
+          }),
+          stroke: new ol.style.Stroke({
+            color: "#FFFF99",
+            width: 3,
+          }),
+        }),
+      }),
+    );
+
+  $("#translateFeature").trigger("click");
+})
+
 //* ******************** Create Zone ******************** *//
 $(document).on("click", "#btn_add_zone", null, function () {
   var $zoneElem = $("#zone_list");
@@ -1372,7 +1479,7 @@ $(document).on("click", "#btn_add_zone", null, function () {
   var selectedZone = {
     type: "Feature",
     properties: {
-      id: "Zone-" + $zoneElem.val(),
+      id: $zoneElem.val(),
       text: $("#zone_list option:selected").html(),
     },
     geometry: {
@@ -1663,24 +1770,24 @@ function init(
       });
     }
 
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    const realWidth = img.naturalWidth;
+    const realHeight = img.naturalHeight;
+    const viewerWidth = document.getElementById("map").clientWidth;
+    const viewerHeight = document.getElementById("map").clientHeight;
+
+    extent = [0, 0, realWidth, realHeight];
+
     var projection = new ol.proj.Projection({
       code: "xkcd-image",
       units: "pixels",
       extent: extent,
     });
 
-    const resolution = window.screen.width
-    let zoomValue;
-    if (resolution > 1440) {
-      zoomValue = 2
-    } else if (resolution <= 1440 && resolution > 1024) {
-      zoomValue = 1.5
-    } else if (resolution <= 1024 && resolution >= 768) {
-      zoomValue = 1.0
-    } else if (resolution < 768 && resolution >= 425) {
-      zoomValue = 0.5
-    } else {
-      zoomValue = 0
+    let zoomValue = (viewerWidth / realWidth);
+    if (zoomValue < 1) {
+      zoomValue = (viewerHeight / realHeight) * (1 + (realHeight / viewerHeight) ** 2)
     }
 
     view = new ol.View({
@@ -1737,7 +1844,7 @@ function init(
       interactions: ol.interaction.defaults({
         dragPan: lock,
       }),
-      loadTilesWhileAnimating: true,
+      loadTilesWhileAnimating: false,
       view: view,
     });
 

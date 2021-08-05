@@ -363,7 +363,7 @@ a.article:hover {
   line-height: normal;
 }
 
-.pulse-alert {
+/* .pulse-alert {
   position: absolute;
   top: -8px;
   left: -8px;
@@ -373,7 +373,7 @@ a.article:hover {
   background-color: red;
   border-radius: 50%;
   animation: pulse 1s infinite ease-out;
-}
+} */
 
 .ol-popup {
   position: absolute;
@@ -538,7 +538,7 @@ a.article:hover {
   }
 }
 
-@keyframes pulse {
+/* @keyframes pulse {
   0% {
     box-shadow: 0 0 0 0px rgba(255, 0, 0, 0.9);
   }
@@ -546,4 +546,4 @@ a.article:hover {
   100% {
     box-shadow: 0 0 0 18px rgba(255, 0, 0, 0);
   }
-}
+} */
