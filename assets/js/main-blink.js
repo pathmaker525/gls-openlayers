@@ -48,9 +48,9 @@ var imageAssetUrl = "assets/images/";
 var map, vector;
 
 var extent = [0, 0, 1024, 968];
-var source;
 
 var container = document.getElementById("popup");
+var source;
 var content = document.getElementById("popup-content");
 var closer = document.getElementById("popup-closer");
 var overlay = new ol.Overlay({
@@ -175,12 +175,15 @@ $(document).on("click", "#scaling", null, function () {
 function alertControl(start) {
   var alertValList = [];
   var cableItemList = [];
+  let blink_color = undefined;
 
   if (document.getElementById("txtblink").value) {
     cableItemList = document.getElementById("txtblink").value.split("|");
   } else {
     return;
   }
+
+  let blink_colorlist = $("#blinkColors").val().split(",");
 
   for (let i = 0; i < cableItemList.length; i++) {
     var alertList = cableItemList[i].split(",");
@@ -202,6 +205,13 @@ function alertControl(start) {
 
   for (let i = 0; i < alertValList.length; i++) {
     var alert_val = alertValList[i];
+
+    blink_colorlist.forEach(colorString => {
+      if (colorString.indexOf(alert_val) > -1) {
+        blink_color = colorString.split("-")[3];
+      }
+    })
+    
     if (!start && alerts[alert_val]) {
       deleteAlertPulse(alerts[alert_val]);
       alerts[alert_val] = undefined;
@@ -229,8 +239,8 @@ function alertControl(start) {
     }
 
     if (cableLength != undefined) {
-      var selected_index = 0;
-
+      var selected_index = -1;
+      var pulseCoords;
       let cableInfo;
       zoneGeoJson.features.forEach((feature, featureIndex) => {
         if (feature.properties.id && feature.properties.id === sel_cable) {
@@ -249,19 +259,22 @@ function alertControl(start) {
             selected_index = i;
           }
         }
-
-        if (selected_index < 0) {
-          selected_index = 0;
-        }
       }
-
+      if (selected_index > -1 && selected_index < cableInfo.length) {
+        pulseCoords = getBlinkCoords(cableInfo[selected_index], cableInfo[selected_index + 1], (alert_pos - cableInfo[selected_index]['offset']) / (cableInfo[selected_index + 1]['offset'] - cableInfo[selected_index]['offset']));
+      } else if (selected_index == -1) {
+        pulseCoords = getBlinkCoords(null, cableInfo[0], alert_pos / (cableInfo[0]['offset']));
+      } else if (selected_index == cableInfo.length) {
+        pulseCoords = getBlinkCoords(cableInfo[cableInfo.length-1], null, 0.5);
+      }
       if (alerts[alert_val]) {
         continue;
       }
 
       var alert = showAlertPulse(
-        cableInfo[selected_index].coordinates[0],
-        cableInfo[selected_index].coordinates[1]
+        pulseCoords['geometry']['coordinates'][0],
+        pulseCoords['geometry']['coordinates'][1],
+        blink_color
       );
       alerts[alert_val] = alert;
     }
@@ -632,7 +645,7 @@ function drawZone(zone) {
 function drawCable(currentCable) {
   initSelectedZone();
   var coordinates = currentCable.geometry.coordinates;
-
+  
   var lineStringFeatures = new ol.Collection();
   lineStringFeatures.push(
     new ol.Feature({
@@ -686,12 +699,13 @@ function drawCable(currentCable) {
   var pointsCoordinates = [];
   var calibrationCoordinates = [];
   points && points.map((point, index) => {
-    if (index === 0 || index === points.length - 1) {
+    if ( index == 0 && index === points.length - 1) {
       pointsCoordinates.push(point.coordinates);
     } else {
       calibrationCoordinates.push({ coordinates: point.coordinates, value: point.offset });
     }
   });
+
 
   calibrationCoordinates.map(calibration => {
     const calibrationPoint = new ol.Feature({
@@ -1377,8 +1391,8 @@ function resetSideBar() {
   $(".app-sidebar-components li").removeClass("active");
 }
 
-function showAlertPulse(xPos, yPos) {
-  let node = createAlertDot();
+function showAlertPulse(xPos, yPos, color) {
+  let node = createAlertDot(color);
   let alert = new ol.Overlay({
     element: node,
   });
@@ -1393,13 +1407,40 @@ function deleteAlertPulse(alert) {
   alert.setPosition(undefined);
 }
 
-function createAlertDot() {
+function createAlertDot(color) {
   let node = document.createElement("div");
   let attr = document.createAttribute("class");
-  attr.value = "pulse-alert";
+  let style = document.createAttribute("style");
+  const className = `pulse-alert${(Math.random() + "").slice(3, 6)}`
+  attr.value = className;
   node.setAttributeNode(attr);
+  node.setAttributeNode(style);
+  if (color) {
+    style.value = `
+      position: absolute;
+      top: -8px;
+      left: -8px;
+      width: 16px;
+      height: 16px;
+      color: red;
+      background-color: #${color};
+      border-radius: 50%;
+    `
+  }
+
+  $.keyframe.define([{
+    name: className,
+    from: {'box-shadow': `0 0 0 0px #${color}bb`},
+    to: {'box-shadow': `0 0 0 18px #${color}00`},
+  }])
 
   document.getElementById("alert").appendChild(node);
+  $(`.${className}`).playKeyframe({
+    name: className,
+    duration: '1s',
+    iterationCount: 'infinite',
+    timingFunction: 'ease-out',
+  })
 
   return node;
 }
@@ -1755,10 +1796,68 @@ function init(
     }
   });
 }
+// Modify callibration points to be settled just on cables.
+function modifyCalibrations(zoneGeoJson)
+{
+    let featureList = zoneGeoJson.features;
+    let i = 0;
+    for(; i<featureList.length;i++) {
+        let feature = featureList[i];
+        let featureLevel = feature.type;
+        if (featureLevel === "Feature" && feature.properties.id.indexOf("Zone") === -1 && feature.properties.text.indexOf("Feet") === -1 && feature.properties.text.indexOf("Meter") === -1) 
+            break;
+    }
+    if (i == featureList.length)
+        return;
+    var coordinates = zoneGeoJson.features[i].geometry.coordinates;
+    const lines = new ol.geom.LineString(coordinates);
+    let closest;
+    for(let j = 0;j<zoneGeoJson.features[i].properties.calibration.length;j++) {
+        closest = (lines.getClosestPoint([zoneGeoJson.features[i].properties.calibration[j].coordinates[0], zoneGeoJson.features[i].properties.calibration[j].coordinates[1]]));
+        zoneGeoJson.features[i].properties.calibration[j].coordinates = closest;
+    }
+}
+function getBlinkCoords(startpt, endpt, ratio)
+{
+    let featureList = zoneGeoJson.features;
+    let i = 0;
+    for(; i<featureList.length;i++) {
+        let feature = featureList[i];
+        let featureLevel = feature.type;
+        if (featureLevel === "Feature" && feature.properties.id.indexOf("Zone") === -1 && feature.properties.text.indexOf("Feet") === -1 && feature.properties.text.indexOf("Meter") === -1)
+            break;
+    }
+    if (i == featureList.length)
+        return;
+    var coordinates = zoneGeoJson.features[i].geometry.coordinates;
+    const lines = new ol.geom.LineString(coordinates);
 
+    let firstpt = lines.getFirstCoordinate();
+
+    if (startpt == null) {
+        startpt = lines.getFirstCoordinate();
+    }
+    else
+        startpt = startpt['coordinates'];
+    if ( endpt == null)
+        endpt = lines.getLastCoordinate();
+    else
+        endpt = endpt['coordinates'];
+    var temp;
+    var line = turf.lineString(zoneGeoJson.features[i].geometry.coordinates);
+    firstpt = turf.point(firstpt);
+    var start = turf.point(startpt);
+    var end = turf.point(endpt);
+    var sliced1 = turf.lineSplit(line, start)['features'][0];
+    var sliced2 = turf.lineSplit(line, end)['features'][0];   
+    var  len1= turf.length(turf.toWgs84(sliced1));
+    var  len2= turf.length(turf.toWgs84(sliced2));
+    return turf.toMercator(turf.along(turf.toWgs84(line), len1 + (len2-len1)*ratio));
+}
 zoneGeoJson = JSON.parse($('#txtgeojson').val())
 setTimeout(() => {
   removeDivs();
+  modifyCalibrations(zoneGeoJson)
   init(zoneGeoJson, zoneGeoJson.image, true)
   alertControl(true)
 }, 1000)
