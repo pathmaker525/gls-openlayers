@@ -593,6 +593,7 @@ function drawZone(zone) {
   }
 
   var features = new ol.format.GeoJSON().readFeatures(geojsonObject);
+
   // New vector layer
   var vector = new ol.layer.Vector({
     source: new ol.source.Vector({
@@ -604,7 +605,7 @@ function drawZone(zone) {
         new ol.style.Style({
           image: new ol.style.RegularShape({
             fill: new ol.style.Fill({
-              color: zone.properties.color
+              color: hexToRGB(zone.properties.color, 0.1)
             }),
             stroke: new ol.style.Stroke({
               color: "#109eff",
@@ -615,10 +616,10 @@ function drawZone(zone) {
             angle: feature.get("angle") || 0,
           }),
           fill: new ol.style.Fill({
-            color: zone.properties.color
+            color: hexToRGB(zone.properties.color, 0.1)
           }),
           stroke: new ol.style.Stroke({
-            color: zone.properties.color,
+            color: hexToRGB(zone.properties.color),
             width: 3
           }),
           text: new ol.style.Text({
@@ -1423,15 +1424,15 @@ function createAlertDot(color) {
       width: 16px;
       height: 16px;
       color: red;
-      background-color: #${color};
+      background-color: ${hexToRGB(color)};
       border-radius: 50%;
     `
   }
 
   $.keyframe.define([{
     name: className,
-    from: {'box-shadow': `0 0 0 0px #${color}bb`},
-    to: {'box-shadow': `0 0 0 18px #${color}00`},
+    from: {'box-shadow': `0 0 0 0px ${hexToRGB(color, 0.8)}`},
+    to: {'box-shadow': `0 0 0 18px ${hexToRGB(color, 0.1)}`},
   }])
 
   document.getElementById("alert").appendChild(node);
@@ -1854,6 +1855,22 @@ function getBlinkCoords(startpt, endpt, ratio)
     var  len2= turf.length(turf.toWgs84(sliced2));
     return turf.toMercator(turf.along(turf.toWgs84(line), len1 + (len2-len1)*ratio));
 }
+function hexToRGB(hex, alpha = 1) {
+  if (hex.indexOf("#") > -1) {
+    hex = hex.slice(1)
+  }
+
+  var r = parseInt(hex.slice(0, 2), 16),
+      g = parseInt(hex.slice(2, 4), 16),
+      b = parseInt(hex.slice(4, 6), 16);
+
+  if (alpha) {
+      return "rgba(" + r + ", " + g + ", " + b + ", " + alpha + ")";
+  } else {
+      return "rgb(" + r + ", " + g + ", " + b + ")";
+    }
+}
+
 zoneGeoJson = JSON.parse($('#txtgeojson').val())
 setTimeout(() => {
   removeDivs();
