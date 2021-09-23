@@ -179,7 +179,7 @@ function alertControl(start) {
   var cableItemList = [];
 
   if (document.getElementById("txtblink").value) {
-    cableItemList = document.getElementById("txtblink").value.split("|");
+    cableItemList = document.getElementById("txtblink").value.split("$");
   } else {
     return;
   }
@@ -221,7 +221,7 @@ function alertControl(start) {
     }
 
     if (cableLength < alert_pos) {
-      alert("Alert position can't over total length of cable")
+      alert("Alert position can't over total length of cable");
       continue;
     }
 
@@ -279,7 +279,9 @@ $(document).on("click", "#btn_add_cable", null, function () {
   var $cableElem = $("#cable_list");
 
   var cableId = $cableElem.val().split("/")[0];
-  var cableLength = $cableElem.val().split("/")[1] * 1;
+  var cableLength = $cableElem.val().split("/")[1];
+  const offset = cableLength.split("-")[0] * 1;
+  const endpoint = cableLength.split("-")[1] * 1;
 
   if (cableId === "Cable-0") {
     alert("Please select cable type!");
@@ -297,12 +299,14 @@ $(document).on("click", "#btn_add_cable", null, function () {
   }
 
   var coordinates = selectedFeature.getGeometry().getCoordinates();
-  var calibration = [{
-    offset: 0,
-    coordinates: coordinates[0],
-  },];
+  var calibration = [
+    {
+      offset,
+      coordinates: coordinates[0],
+    },
+  ];
   calibration.push({
-    offset: cableLength,
+    offset: endpoint,
     coordinates: coordinates[coordinates.length - 1],
   });
 
@@ -319,7 +323,7 @@ $(document).on("click", "#btn_add_cable", null, function () {
     },
   };
 
-  var isAdded = zoneGeoJson.features.find(item => {
+  var isAdded = zoneGeoJson.features.find((item) => {
     return item.properties.id === currentCable.properties.id;
   });
   if (isAdded) {
@@ -486,7 +490,7 @@ $(document).on("click", "#btnDelete", null, function () {
 
     initSelectedZone();
   } else {
-    alert("Nothing to be deleted!")
+    alert("Nothing to be deleted!");
   }
 });
 
@@ -518,9 +522,12 @@ $("#colorPicker").change(function () {
 
   $("#none-click").trigger("click");
 
-  var fill = new ol.interaction.FillAttribute({}, {
-    color: userColor
-  });
+  var fill = new ol.interaction.FillAttribute(
+    {},
+    {
+      color: userColor,
+    }
+  );
   map.addInteraction(fill);
 });
 
@@ -598,22 +605,22 @@ function drawZone(zone) {
         new ol.style.Style({
           image: new ol.style.RegularShape({
             fill: new ol.style.Fill({
-              color: `${feature.getProperties().color}18`
+              color: `${feature.getProperties().color}18`,
             }),
             stroke: new ol.style.Stroke({
               color: "#109eff",
-              width: 2
+              width: 2,
             }),
             radius: 10,
             points: 3,
             angle: feature.get("angle") || 0,
           }),
           fill: new ol.style.Fill({
-            color: `${feature.getProperties().color}18`
+            color: `${feature.getProperties().color}18`,
           }),
           stroke: new ol.style.Stroke({
             color: feature.getProperties().color,
-            width: 3
+            width: 3,
           }),
           text: new ol.style.Text({
             text: feature.get("text"),
@@ -666,7 +673,7 @@ function drawCable(currentCable) {
         new ol.style.Style({
           stroke: new ol.style.Stroke({
             color: "#557ef8",
-            width: 8
+            width: 16,
           }),
           geometry: $("#cspline").prop("#557ef8") ? csp : null,
           text: new ol.style.Text({
@@ -692,15 +699,19 @@ function drawCable(currentCable) {
   var points = currentCable.properties.calibration;
   var pointsCoordinates = [];
   var calibrationCoordinates = [];
-  points && points.map((point, index) => {
-    if (index === 0 || index === points.length - 1) {
-      pointsCoordinates.push(point.coordinates);
-    } else {
-      calibrationCoordinates.push({ coordinates: point.coordinates, value: point.offset });
-    }
-  });
+  points &&
+    points.map((point, index) => {
+      if (index === 0 || index === points.length - 1) {
+        pointsCoordinates.push(point.coordinates);
+      } else {
+        calibrationCoordinates.push({
+          coordinates: point.coordinates,
+          value: point.offset,
+        });
+      }
+    });
 
-  calibrationCoordinates.map(coordinate => {
+  calibrationCoordinates.map((coordinate) => {
     const calibrationPoint = new ol.Feature({
       geometry: new ol.geom.Point(calibration.coordinates),
       text: "calibration",
@@ -712,15 +723,15 @@ function drawCable(currentCable) {
         image: new ol.style.Circle({
           stroke: new ol.style.Stroke({
             color: "#03a9f4",
-            width: 10
+            width: 10,
           }),
           radius: 8,
         }),
       })
     );
 
-    lineStringVector.getSource().addFeatures([calibrationPoint])
-  })
+    lineStringVector.getSource().addFeatures([calibrationPoint]);
+  });
 
   var multiPointFeatures = new ol.Collection();
   multiPointFeatures.push(
@@ -734,7 +745,7 @@ function drawCable(currentCable) {
   var multiPointVector = new ol.layer.Vector({
     name: "section-layer",
     source: new ol.source.Vector({
-      features: multiPointFeatures
+      features: multiPointFeatures,
     }),
     title: currentCable.properties.id,
     style: function (f) {
@@ -743,7 +754,7 @@ function drawCable(currentCable) {
           image: new ol.style.Circle({
             stroke: new ol.style.Stroke({
               color: "#557ef8",
-              width: 5
+              width: 5,
             }),
             radius: 3,
           }),
@@ -774,19 +785,45 @@ function addModifyAction(features) {
     },
     insertVertexCondition: (event) => {
       if (isSelectCalibration) {
-        const coordinates = map.getEventPixel(event.originalEvent);
-        const realCoordinate = event.coordinate
-        const layerTitle = map.forEachFeatureAtPixel(coordinates, (feature, layer) => {
-          if (layer && layer.get("title") && layer.get("title").indexOf("Cable") > -1) {
-            return layer.get("title")
+
+          let coordinates = map.getEventPixel(event.originalEvent);
+
+          let realCoordinate = event.coordinate;
+          var closest;
+          var closestLength;
+          for (var ind=0; ind < zoneGeoJson['features'].length; ind++) {
+            if (zoneGeoJson['features'][ind]['properties']['id'].indexOf('Cable') == -1)
+            continue;
+            let lines = new ol.geom.LineString(zoneGeoJson['features'][ind]['geometry']['coordinates']);
+            let tmp   = lines.getClosestPoint([realCoordinate[0], realCoordinate[1]]);    
+            var len = Math.sqrt((tmp[0]-realCoordinate[0]) * (tmp[0]-realCoordinate[0]) + (tmp[1]-realCoordinate[1]) * (tmp[1]-realCoordinate[1]));
+            if (typeof closestLength == 'undefined' || len < closestLength) {
+              closestLength = len;
+              closest = tmp;
+            }
           }
-        })
+          realCoordinate = closest;
+
+        const layerTitle = map.forEachFeatureAtPixel(
+          coordinates,
+          (feature, layer) => {
+            if (
+              layer &&
+              layer.get("title") &&
+              layer.get("title").indexOf("Cable") > -1
+            ) {
+              return layer.get("title");
+            }
+          }
+        );
         const layers = event.target.getLayers().getArray();
         layers.forEach((layer) => {
           if (
             layer.getProperties().name === "section-layer" &&
             layer.getSource().getFeatures()[0].getGeometry().getType() ===
-            "MultiPoint" && layer.get("title") && layer.get("title") === layerTitle
+              "MultiPoint" &&
+            layer.get("title") &&
+            layer.get("title") === layerTitle
           ) {
             const layerSource = layer.getSource();
 
@@ -800,7 +837,7 @@ function addModifyAction(features) {
                 image: new ol.style.Circle({
                   stroke: new ol.style.Stroke({
                     color: "#03a9f4",
-                    width: 20
+                    width: 20,
                   }),
                   radius: 15,
                 }),
@@ -853,14 +890,14 @@ function drawScaling(selectedUnit) {
   var vector = new ol.layer.Vector({
     name: "addDottedLinesLayers",
     source: new ol.source.Vector({
-      features: features
+      features: features,
     }),
     style: function (f) {
       return [
         new ol.style.Style({
           stroke: new ol.style.Stroke({
             color: "green",
-            width: 3
+            width: 3,
           }),
           text: new ol.style.Text({
             text: selectedUnit.properties.text,
@@ -892,7 +929,6 @@ function drawScaling(selectedUnit) {
   map.addInteraction(mod);
 }
 
-
 function generateFeaturesInGeoJson(zoneGeoJson) {
   let featureList = zoneGeoJson.features;
 
@@ -910,7 +946,8 @@ function generateFeaturesInGeoJson(zoneGeoJson) {
       } else {
         drawCable(feature);
       }
-    } else if (featureLevel === "Drawing") { } else {
+    } else if (featureLevel === "Drawing") {
+    } else {
       alert("File is broken! Please upload right geojson file!");
     }
   });
@@ -1089,7 +1126,8 @@ function addTransformNonScaleAction() {
 }
 
 function onCalibrationSave() {
-  const offset = $("#calibrationInfo").val() * 1;
+  let offset = $("#calibrationInfo").val() * 1;
+
   let maxValue;
 
   if (!offset) {
@@ -1102,8 +1140,8 @@ function onCalibrationSave() {
       zoneGeoJson.features[featureIndex].properties.calibration.forEach(
         (item, index) => {
           if (item.offset === offset) {
-            duplicated = true
-            alert("That offset value is exist")
+            duplicated = true;
+            alert("That offset value is exist");
           }
         }
       );
@@ -1117,7 +1155,7 @@ function onCalibrationSave() {
   });
 
   if (duplicated) {
-    return
+    return;
   }
 
   if (offset >= maxValue.offset) {
@@ -1140,7 +1178,7 @@ function onCalibrationSave() {
   const oldProperties = selectedFeature.getProperties();
   selectedFeature.setProperties({
     ...oldProperties,
-    value: offset
+    value: offset,
   });
 
   console.log(zoneGeoJson);
@@ -1160,7 +1198,8 @@ function onCalibrationDelete() {
           }
         }
       );
-      zoneGeoJson.features[featureIndex].properties.calibration = newCalibration
+      zoneGeoJson.features[featureIndex].properties.calibration =
+        newCalibration;
       zoneGeoJson.features[featureIndex].properties.calibration.sort(
         (a, b) => a.offset - b.offset
       );
@@ -1177,7 +1216,21 @@ function showCalibrationTooltip(feature) {
     if (selectedFeature.getProperties().value) {
       $("#calibrationInfo").val(selectedFeature.getProperties().value);
     } else {
-      $("#calibrationInfo").val("");
+      const line = turf.lineString(
+        zoneGeoJson["features"][0]["geometry"]["coordinates"]
+      );
+      const current = selectedFeature.getGeometry().getCoordinates();
+      const currentpt = turf.point(current);
+      var sliced = turf.lineSplit(line, currentpt)["features"][0];
+      var len0 = turf.length(turf.toWgs84(line));
+      var len1 = turf.length(turf.toWgs84(sliced));
+      var $cableElem = $("#cable_list");
+      var cableId = $cableElem.val().split("/")[0];
+      var cableLength = $cableElem.val().split("/")[1];
+      var offset = cableLength.split("-")[0] * 1;
+      var endpoint = cableLength.split("-")[1] * 1;
+      offset = Math.floor(offset + ((endpoint - offset) * len1) / len0);
+      $("#calibrationInfo").val(offset);
     }
   }
   overlay.setPosition(feature.getGeometry().getCoordinates());
@@ -1197,7 +1250,7 @@ function addSelectAction() {
             image: new ol.style.Circle({
               stroke: new ol.style.Stroke({
                 color: "#f26552",
-                width: 20
+                width: 20,
               }),
               radius: 15,
             }),
@@ -1211,7 +1264,7 @@ function addSelectAction() {
         new ol.style.Style({
           stroke: new ol.style.Stroke({
             color: "#f26552",
-            width: 6
+            width: 6,
           }),
           text: new ol.style.Text({
             text: each.getProperties().text,
@@ -1225,12 +1278,12 @@ function addSelectAction() {
             }),
           }),
           fill: new ol.style.Fill({
-            color: "#f2655250"
+            color: "#f2655250",
           }),
           image: new ol.style.Circle({
             stroke: new ol.style.Stroke({
               color: "#f2655200",
-              width: 6
+              width: 6,
             }),
             radius: 3,
           }),
@@ -1240,27 +1293,30 @@ function addSelectAction() {
 
     event.deselected.forEach((each) => {
       console.log("deselect");
-      if (each.getProperties().id && each.getProperties().id.indexOf("Zone-") > -1) {
+      if (
+        each.getProperties().id &&
+        each.getProperties().id.indexOf("Zone-") > -1
+      ) {
         each.setStyle(
           new ol.style.Style({
             image: new ol.style.RegularShape({
               fill: new ol.style.Fill({
-                color: `${each.getProperties().color}18`
+                color: `${each.getProperties().color}18`,
               }),
               stroke: new ol.style.Stroke({
                 color: "#109eff",
-                width: 2
+                width: 2,
               }),
               radius: 10,
               points: 3,
               angle: each.get("angle") || 0,
             }),
             fill: new ol.style.Fill({
-              color: `${each.getProperties().color}18`
+              color: `${each.getProperties().color}18`,
             }),
             stroke: new ol.style.Stroke({
               color: each.getProperties().color,
-              width: 3
+              width: 3,
             }),
             text: new ol.style.Text({
               text: each.get("text"),
@@ -1274,10 +1330,10 @@ function addSelectAction() {
                 width: 3,
               }),
             }),
-          }),
+          })
         );
       }
-    })
+    });
 
     return;
   });
@@ -1309,7 +1365,7 @@ function changeActionAs(actionType, shape = "None") {
         source: source,
         type: getGeometryFunction(shape)[0],
         geometryFunction: getGeometryFunction(shape)[1],
-      })
+      });
       break;
     case "Transform":
       newAction = new ol.interaction.Transform({
@@ -1389,14 +1445,16 @@ function getGeometryFunction(geometryType) {
 function hexToRgbA(hex) {
   let c;
   if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
-    c = hex.substring(1).split('');
+    c = hex.substring(1).split("");
     if (c.length == 3) {
       c = [c[0], c[0], c[1], c[1], c[2], c[2]];
     }
-    c = '0x' + c.join('');
-    return 'rgba(' + [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(',') + ',1)';
+    c = "0x" + c.join("");
+    return (
+      "rgba(" + [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(",") + ",1)"
+    );
   }
-  throw new Error('Bad Hex');
+  throw new Error("Bad Hex");
 }
 
 $(document).on("click", "#btnChangeColor", null, function () {
@@ -1416,39 +1474,42 @@ $(document).on("click", "#btnChangeColor", null, function () {
           const featureId = featureProperties.id;
 
           console.log(featureId, selectedFeature.getProperties().id);
-          if (selectedFeature.getProperties().id && featureId === selectedFeature.getProperties().id) {
-            console.log(featureId, featureProperties.color, newColor)
+          if (
+            selectedFeature.getProperties().id &&
+            featureId === selectedFeature.getProperties().id
+          ) {
+            console.log(featureId, featureProperties.color, newColor);
             featureProperties.color = newColor;
             feature.setProperties(featureProperties);
-            targetZone = feature
+            targetZone = feature;
           }
-        })
+        });
       }
     }
-  })
+  });
 
-  console.log(targetZone.getProperties().color)
+  console.log(targetZone.getProperties().color);
   targetZone &&
     targetZone.setStyle(
       new ol.style.Style({
         image: new ol.style.RegularShape({
           fill: new ol.style.Fill({
-            color: `${targetZone.getProperties().color}18`
+            color: `${targetZone.getProperties().color}18`,
           }),
           stroke: new ol.style.Stroke({
             color: "#109eff",
-            width: 2
+            width: 2,
           }),
           radius: 10,
           points: 3,
           angle: targetZone.get("angle") || 0,
         }),
         fill: new ol.style.Fill({
-          color: `${targetZone.getProperties().color}18`
+          color: `${targetZone.getProperties().color}18`,
         }),
         stroke: new ol.style.Stroke({
           color: targetZone.getProperties().color,
-          width: 3
+          width: 3,
         }),
         text: new ol.style.Text({
           text: targetZone.get("text"),
@@ -1462,11 +1523,11 @@ $(document).on("click", "#btnChangeColor", null, function () {
             width: 3,
           }),
         }),
-      }),
+      })
     );
 
   $("#translateFeature").trigger("click");
-})
+});
 
 //* ******************** Create Zone ******************** *//
 $(document).on("click", "#btn_add_zone", null, function () {
@@ -1520,7 +1581,6 @@ $(document).on("click", "#btn_add_zone", null, function () {
   $("#translateFeature").trigger("click");
 });
 
-
 function resetSideBar() {
   initSelectedZone();
   isSelectCalibration = false;
@@ -1554,7 +1614,6 @@ function createAlertDot() {
   return node;
 }
 
-
 function updateGeoJson() {
   tempZoneGeoJson = {
     type: "FeatureCollection",
@@ -1572,22 +1631,29 @@ function updateGeoJson() {
       },
       geometry: {
         type,
-        coordinates
+        coordinates,
       },
     };
   };
 
-  const generateFeatureJsonWithCalibration = (level, id, text, calibration, type, coordinates) => {
+  const generateFeatureJsonWithCalibration = (
+    level,
+    id,
+    text,
+    calibration,
+    type,
+    coordinates
+  ) => {
     return {
       type: level,
       properties: {
         id,
         text,
-        calibration
+        calibration,
       },
       geometry: {
         type,
-        coordinates
+        coordinates,
       },
     };
   };
@@ -1652,62 +1718,69 @@ function updateGeoJson() {
               layerNameList.push(featureText);
             }
             tempZoneGeoJson.features.push(
-              featureId && featureId.indexOf("Cable") > -1 ?
-                generateFeatureJsonWithCalibration(
-                  featureLevel,
-                  featureId,
-                  featureText,
-                  tempCalibration[featureId],
-                  featureType,
-                  featureCoordinates
-                ) :
-                generateFeatureJson(
-                  featureLevel,
-                  featureId,
-                  featureText,
-                  featureType,
-                  featureCoordinates,
-                  featureColor
-                )
+              featureId && featureId.indexOf("Cable") > -1
+                ? generateFeatureJsonWithCalibration(
+                    featureLevel,
+                    featureId,
+                    featureText,
+                    tempCalibration[featureId],
+                    featureType,
+                    featureCoordinates
+                  )
+                : generateFeatureJson(
+                    featureLevel,
+                    featureId,
+                    featureText,
+                    featureType,
+                    featureCoordinates,
+                    featureColor
+                  )
             );
           }
         });
       }
     }
   });
-  addedCable = []
-  addedZone = []
-  tempZoneGeoJson.features.map(feature => {
+  addedCable = [];
+  addedZone = [];
+  tempZoneGeoJson.features.map((feature) => {
     const featureProperties = feature.properties;
-    if (featureProperties && featureProperties.id && featureProperties.id.indexOf("Cable") > -1) {
-      addedCable.push(featureProperties.id)
+    if (
+      featureProperties &&
+      featureProperties.id &&
+      featureProperties.id.indexOf("Cable") > -1
+    ) {
+      addedCable.push(featureProperties.id);
     }
-    if (featureProperties && featureProperties.id && featureProperties.id.indexOf("Zone") > -1) {
-      addedZone.push(featureProperties.id)
+    if (
+      featureProperties &&
+      featureProperties.id &&
+      featureProperties.id.indexOf("Zone") > -1
+    ) {
+      addedZone.push(featureProperties.id);
     }
-  })
-  zoneGeoJson = tempZoneGeoJson
+  });
+  zoneGeoJson = tempZoneGeoJson;
 }
-
-$(document).on("click", "#btnSave", null, function (e) {
+function saveFunc(e) {
   updateGeoJson();
   let usedCables = "";
   addedCable.map((cableId, index) => {
     if (index === addedCable.length - 1) {
-      usedCables += cableId
+      usedCables += cableId;
     } else {
-      usedCables += cableId + ","
+      usedCables += cableId + ",";
     }
-  })
+  });
 
   let usedZones = "";
   addedZone.map((zoneId, index) => {
     if (index === addedZone.length - 1) {
-      usedZones += zoneId
+      usedZones += zoneId;
     } else {
-      usedZones += zoneId + ","
+      usedZones += zoneId + ",";
     }
-  })
+  });
 
   let isZoneCreated = false;
 
@@ -1723,19 +1796,21 @@ $(document).on("click", "#btnSave", null, function (e) {
   }
 
   // * Ajax call to localhost. Address is changeable
+  isZoneCreated = true;
   if (!isZoneCreated) {
     alert("No zone selected!");
-    return
+    return;
   }
+
   console.log(JSON.stringify(zoneGeoJson));
 
   $.post("http://10.10.10.11", {
     data: JSON.stringify({
       ...zoneGeoJson,
       "File Name": $("#txtfnam").val(),
-      "All Cable Id": `${usedCables}`,
-      "All Zone Id": `${usedZones}`
-    })
+      "All Cable Id": `${usedCables === "" ? "No selected Zone" : usedCables}`,
+      "All Zone Id": `${usedZones}`,
+    }),
   })
     .done(function (data) {
       alert("GeoJson file has successfully transferred");
@@ -1743,7 +1818,8 @@ $(document).on("click", "#btnSave", null, function (e) {
     .fail(function (err) {
       alert("Sorry, there is an error");
     });
-});
+}
+$(document).on("click", "#btnSave", null, saveFunc);
 
 function init(
   geoJson = null,
@@ -1785,7 +1861,7 @@ function init(
       });
     }
 
-    const img = document.createElement('img');
+    const img = document.createElement("img");
     img.src = imageUrl;
     const realWidth = img.naturalWidth;
     const realHeight = img.naturalHeight;
@@ -1800,9 +1876,10 @@ function init(
       extent: extent,
     });
 
-    let zoomValue = (viewerWidth / realWidth);
+    let zoomValue = viewerWidth / realWidth;
     if (zoomValue < 1) {
-      zoomValue = (viewerHeight / realHeight) * (1 + (realHeight / viewerHeight) ** 2)
+      zoomValue =
+        (viewerHeight / realHeight) * (1 + (realHeight / viewerHeight) ** 2);
     }
 
     view = new ol.View({
@@ -1842,7 +1919,7 @@ function init(
             color: f.get("color") || "rgba(255, 255, 255, 0.2)",
           }),
           stroke: new ol.style.Stroke({
-            width: 5,
+            width: 12,
             lineDash: [isDashLine],
             color: f.get("color") || [255, 128, 0],
           }),
@@ -1864,7 +1941,7 @@ function init(
     });
 
     if (modify) {
-      map.removeInteraction(modify)
+      map.removeInteraction(modify);
     }
   }
 
@@ -1931,9 +2008,9 @@ function init(
   });
 }
 
-zoneGeoJson = JSON.parse($('#txtgeojson').val())
+zoneGeoJson = JSON.parse($("#txtgeojson").val());
 setTimeout(() => {
   removeDivs();
-  init(zoneGeoJson, zoneGeoJson.image, true)
-  alertControl(true)
-}, 1000)
+  init(zoneGeoJson, zoneGeoJson.image, true);
+  alertControl(true);
+}, 1000);

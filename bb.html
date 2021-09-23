@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
-    <title>GLS Map Editor</title>
+    <title>GLS Map Blink</title>
 
     <link rel="preconnect" href="https://fonts.gstatic.com" />
     <!-- Openlayers Library Style -->
@@ -25,19 +25,28 @@
     <!-- jQuery Custom Scrollbar Styles -->
     <link rel="stylesheet" href="assets/css/jquery.mCustomScrollbar.min.css" />
     <!-- Main CSS -->
-    <link rel="stylesheet" href="assets/css/main.css" />
+    <link rel="stylesheet" href="assets/css/mainblink.css" />
   </head>
 
   <body>
     <div class="app-wrapper">
       <input id="txtfnam" name="txtfnam" type="hidden" value="abc.json" />
-      <input id="txtblink" name="txtblink" type="hidden" />
+      <input
+        id="txtblink"
+        name="txtblink"
+        type="hidden"
+        value="Zone-11/Cable-34/81"
+      />
       <textarea id="txtgeojson" name="txtgeojson" hidden>
-      {"type":"FeatureCollection","features":[],"image":"map-image.png"}
+        {"type":"FeatureCollection","features":[{"type":"Feature","properties":{"id":"Zone-11","text":"subzone-2","color":"#000000"},"geometry":{"type":"Polygon","coordinates":[[[190.3753856650007,220.87390174603183],[1498.7637621404278,220.87390174603183],[1498.7637621404278,475.878557998984],[190.3753856650007,475.878557998984],[190.3753856650007,220.87390174603183]]]}},{"type":"Feature","properties":{"id":"Cable-27","text":"Device 1-Cable 1-Section 1-Zone","calibration":[{"offset":0,"coordinates":[230.8901441350959,514.0100953826029]},{"offset":59,"coordinates":[1477.314772362142,504.47721103669824]}]},"geometry":{"type":"LineString","coordinates":[[230.8901441350959,514.0100953826029],[1477.314772362142,504.47721103669824]]}},{"type":"Feature","properties":{"id":"Cable-33","text":"Device 1-Cable 1-Section 2-Zone","calibration":[{"offset":60,"coordinates":[1482.0812145350944,466.3456736530792]},{"offset":76,"coordinates":[1472.5483301891898,230.40678609193662]}]},"geometry":{"type":"LineString","coordinates":[[1482.0812145350944,466.3456736530792],[1472.5483301891898,230.40678609193662]]}},{"type":"Feature","properties":{"id":"Cable-34","text":"Device 1-Cable 1-Section 3-Zone","calibration":[{"offset":77,"coordinates":[1429.6503506326183,220.87390174603217]},{"offset":111,"coordinates":[233.27336522157208,225.6403439189845]}]},"geometry":{"type":"LineString","coordinates":[[1429.6503506326183,220.87390174603217],[233.27336522157208,225.6403439189845]]}},{"type":"Feature","properties":{"id":"Cable-35","text":"Device 1-Cable 1-Section 4-Zone","calibration":[{"offset":36,"coordinates":[238.03980739452447,473.49533691250804]},{"offset":62,"coordinates":[235.65658630804828,273.30476564850824]}]},"geometry":{"type":"LineString","coordinates":[[238.03980739452447,473.49533691250804],[235.65658630804828,273.30476564850824]]}}],"image":"C21119-1FL.1.png","File Name":"abc.json","All Cable Id":"Cable-27,Cable-33,Cable-34,Cable-35","All Zone Id":"Zone-11"}
+    </textarea
+      >
+      <textarea id="blinkColors" name="blinkColors" hidden>
+        Zone-11/Cable-34/81-ffff00,
     </textarea
       >
       <!-- Sidebar Holder -->
-      <nav id="sidebar" class="app-sidebar">
+      <nav id="sidebar" class="app-sidebar" hidden>
         <div class="app-sidebar-header">
           <a href="gls.html">
             <img
@@ -48,7 +57,7 @@
           </a>
           <h3 class="logo-text">GLS Editor</h3>
         </div>
-        <ul class="list-unstyled app-sidebar-components">
+        <ul class="list-unstyled app-sidebar-components" hidden>
           <li>
             <a
               href="#"
@@ -167,12 +176,12 @@
               Scaling
             </a>
           </li>
-          <p class="copyright">© 2021 PermAlert</p>
+          <p class="copyright">Â© 2021 PermAlert</p>
         </ul>
       </nav>
       <!-- End of Sidebar -->
       <!-- Modal Holder -->
-      <div class="modal fade" id="scaleModel" role="dialog">
+      <div class="modal fade" id="scaleModel" role="dialog" hidden>
         <div class="modal-dialog">
           <!-- Modal Content-->
           <div class="modal-content">
@@ -225,7 +234,7 @@
       <!-- End of Modal -->
       <!-- Page Content Holder -->
       <div id="content">
-        <nav class="navbar" id="side-nav-button">
+        <nav class="navbar" id="side-nav-button" hidden>
           <div class="navbar-wrapper">
             <div class="navbar-header">
               <button
@@ -236,10 +245,6 @@
                 <i class="glyphicon glyphicon-align-left"></i>
               </button>
               <div style="flex-grow: 1"></div>
-              <input type="color" name="zoneColor" id="zoneColor" />
-              <button id="btnChangeColor" class="btn btn-primary">
-                Change Color
-              </button>
             </div>
             <div class="app-controller" id="controller">
               <div class="app-controller-assigner">
@@ -250,10 +255,8 @@
                       class="form-control app-optional"
                       aria-placeholder="Select Zone"
                     >
-                      <option value="Zone-0">Select Zone</option>
-                      <option value="Zone-1">Kitchen</option>
-                      <option value="Zone-2">Living Room</option>
-                      <option value="Zone-3">Bedroom</option>
+                      <option value="0">Select Zone</option>
+                      <option value="Zone-11">subzone-2</option>
                     </select>
                   </div>
                   <button class="btn btn-primary" id="btn_add_zone">
@@ -263,12 +266,19 @@
                 <div class="app-controller-items">
                   <div class="app-controller-item-layout">
                     <select id="cable_list" class="form-control app-optional">
-                      <option value="Cable-0/0">Select Cable</option>
-                      <option value="Cable-1/0-800">
-                        GDeviceAT30c01-Cable 1-Section 1-Functional Cable
+                      <option value="0#0">Select Cable</option>
+                      <option value="Cable-27/0-59">
+                        Device 1-Cable 1-Section 1-Zone
                       </option>
-                      <option value="Cable-2/801-900">Cable 2</option>
-                      <option value="Cable-3/901-1000">Cable 3</option>
+                      <option value="Cable-33/60-76">
+                        Device 1-Cable 1-Section 2-Zone
+                      </option>
+                      <option value="Cable-34/77-111">
+                        Device 1-Cable 1-Section 3-Zone
+                      </option>
+                      <option value="Cable-35/112-138">
+                        Device 1-Cable 1-Section 4-Zone
+                      </option>
                     </select>
                   </div>
                   <button class="btn btn-primary" id="btn_add_cable">
@@ -333,13 +343,14 @@
     <script src="assets/js/ol.js"></script>
     <script src="assets/js/ol-ext.js"></script>
     <!-- jQuery CDN -->
-    <script src="assets/js/jquery-1.12.0.min.js"></script>
+    <script src="http://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
     <!-- Bootstrap Js CDN -->
     <script src="assets/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
     <!-- jQuery Custom Scroller CDN -->
     <script src="assets/js/jquery.mCustomScrollbar.concat.min.js"></script>
     <!-- Main JS -->
-    <script src="assets/js/main-editor.js"></script>
+    <script src="assets/js/jquery.keyframes.min.js"></script>
+    <script src="assets/js/main-blink.js"></script>
 
     <script type="text/javascript">
       $(document).ready(function () {
